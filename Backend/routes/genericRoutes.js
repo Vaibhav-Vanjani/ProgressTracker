@@ -145,13 +145,13 @@ router.get('/sheet',async function(req,res){
     });
 
     if(!viewOnlySheet?.length){
-        res.status(500).json({
+        return res.status(500).json({
             success:false,
             data: "No Sheets available !!",
         })
     }
 
-    res.status(200).json({
+   return res.status(200).json({
         success:true,
         data: viewOnlySheet,
     })

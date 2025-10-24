@@ -3,7 +3,9 @@ const app = express();
 const adminRoute = require('./routes/adminRoutes.js');
 const genericRoute = require('./routes/genericRoutes.js');
 const dbConnect = require('./config/database.js');
+const cors = require('cors');
 
+app.use(cors());
 app.use('/admin',adminRoute);
 app.use('/',genericRoute);
 
