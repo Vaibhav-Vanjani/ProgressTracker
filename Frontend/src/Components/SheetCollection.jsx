@@ -52,16 +52,16 @@ export default function SheetCollection({ sheet, sheetViewHandler }) {
                 </h2>
 
                 {/* Action Button Style */}
-                <button className="cursor-pointer mt-4 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md transition">
+                <button
+                onClick={() => sheetViewHandler("available-sheet")}
+                className="cursor-pointer mt-4 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md transition">
                   Add Sheet
                 </button>
               </div>
             </div>
         </div>
       ) : (
-        <p className="text-center text-gray-500 text-lg italic mt-10">
-          No sheets available yet.
-        </p>
+        <></>
       )}
     </section>
   );

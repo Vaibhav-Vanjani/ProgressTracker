@@ -37,15 +37,15 @@ const sheetSchema = z.object({
             subsectionName:z.string(),
             subsection:z.array(
                 z.object({
-                    questionName: z.string(),
-                    questionLink: z.string(),
+                    questionName: z.string().min(1),
+                    questionLink: z.string().min(1),
                     difficulty: z.enum(["Easy", "Medium", "Hard"]),
                     markForRevision: z.boolean(),
                     markCompleted: z.boolean(),
                 })
-            ),
+            ).min(1),
         })
-    ),
+    ).min(1),
 })
 
 async function addQuestionToSubSection(userId,sheetId,sectionId,questionObj) {
@@ -126,20 +126,21 @@ async function addQuestionToSubSection(userId,sheetId,sectionId,questionObj) {
 
              return "SUCCESS";
         }    
-       return "FAILURE";
+       return "Sheet Already Present With This Name";
     } catch (error) {
         console.log(error);
         return "FAILURE";
     }  
 }
 
-
+router.use(express.json());
 router.post('/addSheet',async (req,res,next)=>{
     try{
-            console.log("inside admin addsheet");
+            console.log("inside admin addsheet",req.body);
             const sheetSchemaValidate = sheetSchema.safeParse(req.body);
 
             if(!sheetSchemaValidate.success){
+                 console.log(sheetSchemaValidate.error);
                 return res.status(400).json({
                     success:false,
                     data:sheetSchemaValidate.error.issues[0].message,
@@ -178,6 +179,7 @@ router.post('/addQuestion',async function(req,res){
             const ZodRequest = questionShema.safeParse(req.body);
 
             if(!ZodRequest.success){
+                console.log(ZodRequest.error);
                 return res.status(400).json({
                     success:false,
                     data: ZodRequest.error.issues[0],

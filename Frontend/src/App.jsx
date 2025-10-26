@@ -3,6 +3,7 @@ import './App.css'
 import { useEffect } from 'react';
 import SheetCollection from './Components/SheetCollection.jsx';
 import CreateSheet from './Components/CreateSheet.jsx';
+import SheetView from './Components/SheetView.jsx';
 
 function App() {
   const [sheetArray,setSheetArray] = useState([]);
@@ -44,9 +45,8 @@ function App() {
     <>
       {/* {JSON.stringify(sheetArray)} */}
       {/* <LoginBlocker/> */}
-      {/* <Sheet sheet={sheetArray}/> */}
       <SheetCollection sheet={sheetArray} sheetViewHandler={sheetViewHandler}/>
-      {/* <SheetView sheet={sheetArray} sheetViewId ={sheetViewId}/> */}
+      <SheetView sheet={sheetArray} sheetViewId ={sheetViewId}/>
       <CreateSheet/>
     </>
   )

@@ -4,6 +4,7 @@ import RecursiveSection from "./RecursiveSection";
 export default function CreateSheet() {
     const [sheetName,setSheetName] = useState("");
     const [showSectionBar,setShowSectionBar] = useState(false);
+    const [errorMessage,setErrorMessage] = useState(null);
     
   return (
     <div className="min-h-screen flex flex-col items-center bg-gray-50 py-10 px-4">
@@ -13,20 +14,46 @@ export default function CreateSheet() {
         </h1>
 
         <div className="flex gap-3 mb-6">
-          <input
+          {!showSectionBar ? 
+          (<input
             type="text"
             placeholder="Sheet Name"
             className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
             onChange={(e)=>setSheetName(e.target.value)}
-          />
+            value={sheetName}
+          />) 
+          :
+           (
+           <div
+            className="flex-1 rounded-md border border-gray-200 
+                      bg-gray-100 text-gray-500
+                      px-3 py-2 shadow-sm
+                      cursor-not-allowed pointer-events-none select-none"
+          >
+            {sheetName}
+          </div>
+           ) 
+          }
+          {!showSectionBar ? 
           <button 
-          onClick={()=>setShowSectionBar(!showSectionBar)}
+          onClick={()=>{
+          if(!setSheetName || !sheetName.trim().length){
+              setErrorMessage("Sheet Name cannot be blank !");
+              return ;
+          } setShowSectionBar(true); }}
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-semibold transition">
             Confirm
           </button>
+          :
+          <button 
+          onClick={()=>{setShowSectionBar(false); }}
+          className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-semibold transition">
+            Edit
+          </button>
+          }
         </div>
 
-       {showSectionBar && <RecursiveSection sheetName={sheetName} />}
+       {<RecursiveSection sheetName={sheetName} errorMessage={errorMessage} />}
       </div>
     </div>
   );

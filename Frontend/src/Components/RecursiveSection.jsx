@@ -1,10 +1,51 @@
 import { useState } from "react";
+import { TrashIcon } from '@heroicons/react/24/solid';
 
-export default function RecursiveSection({ sheetName }) {
-  const [sectionArr, setSectionArr] = useState(["section-0"]);
+
+export default function RecursiveSection({ sheetName ,errorMessage}) {
+  const [sectionArr, setSectionArr] = useState([]);
   const [questionArr, setQuestionArr] = useState({});
   const [questionForm, setQuestionForm] = useState({});
   const [sectionName, setSectionName] = useState({});
+  const [editSectionBar,setEditSectionBar] = useState(false);
+  const [sheetErrorMessage,setSheetErrorMessage] = useState(errorMessage);
+
+  function addSheetToDB(sheet) {
+    try {
+       async function getSheets(){
+          const response = await fetch('http://localhost:3000/admin/addSheet',
+            {
+                method:"POST",
+                headers: 
+                {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                },
+                body: JSON.stringify(sheet),
+       });
+          if(!response.ok){
+            setSheetErrorMessage("**Please fill all details !!");
+            setTimeout(()=>{
+               setSheetErrorMessage(null);
+            },2000)
+            console.log(response);
+            return ;
+          }
+          const data = await response.json();
+          console.log(data.data);
+          setSheetErrorMessage(null);
+          setSectionArr([]);
+          setQuestionArr({});
+          setQuestionForm({});
+          setSectionName({});
+      }
+      getSheets();
+  
+      console.log("addSheetToDB");
+     } catch (error) {
+        console.log(error);
+     }
+  }
 
   function questionFormHandler(event, id) {
     const { name, value } = event.target;
@@ -16,13 +57,15 @@ export default function RecursiveSection({ sheetName }) {
 
   function submittedQuestionHandler(event, id) {
     event.preventDefault();
+    console.log(questionForm[id],"submittedQuestionHandler");
     setQuestionArr((prev) => {
       const newPrev = { ...prev };
-      if (!newPrev[id]) newPrev[id] = [questionForm[id]];
-      else newPrev[id].push(questionForm[id]);
+      console.log(newPrev,"submittedQuestionHandler1");
+      if (!newPrev[id]) {newPrev[id] = [questionForm[id]];}
+      else {newPrev[id].push(questionForm[id]);}
       return newPrev;
     });
-    setQuestionForm((prev) => ({ ...prev, [id]: {} })); // Clear form after submit
+    setQuestionForm((prev) => ({ ...prev, [id]: null })); // Clear form after submit
   }
 
   function addSectionHandler() {
@@ -38,16 +81,37 @@ export default function RecursiveSection({ sheetName }) {
     });
   }
 
+  function deleteQuestionHandler(id,index){
+     setQuestionArr((prev) => {
+      const newPrev = { ...prev };
+      console.log(id,index,newPrev[id],"check22");
+      newPrev[id] =  newPrev[id].filter((_,indx)=>{
+        console.log(index,indx,"returnarr1",typeof index,typeof indx);
+        return (index !== indx)
+      });
+      return newPrev;
+    });
+  }
+
   function createSheetHandler() {
     const resultObject = {
       sheetName,
       createdBy: "ViewOnly",
       section: sectionArr.map((id) => ({
         subsectionName: sectionName[id],
-        subsection: questionArr[id],
+        subsection: questionArr[id]?.map((question)=>{
+            return {
+                    "questionName": question.name,
+                    "questionLink": question.link,
+                    "difficulty": question.difficulty,
+                    "markForRevision": false,
+                    "markCompleted": false
+            };
+        })
       })),
     };
     console.log(resultObject,sectionName, "createSheetHandler");
+    addSheetToDB(resultObject);
   }
 
   return (
@@ -59,7 +123,7 @@ export default function RecursiveSection({ sheetName }) {
         >
           {/* Section Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
-            <input
+            {!editSectionBar ? <input
               type="text"
               placeholder="Section Name"
               id={section}
@@ -69,15 +133,39 @@ export default function RecursiveSection({ sheetName }) {
                   [section]: e.target.value,
                 }))
               }
+              value={sectionName[section]}
               className="border border-gray-300 rounded-md px-3 py-2 w-full sm:w-2/3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
+            /> :
+            <div className="py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-md px-3 py-2 w-full sm:w-2/3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
+              {(sectionName?.[section]?.length && sectionName?.[section]?.length>40) ? sectionName[section].substring(0,40) : sectionName[section]}
+            </div>
+            }
+            
+            {!editSectionBar ? 
+          <button 
+          onClick={()=>{setEditSectionBar(true); }}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded-md font-semibold transition mt-2 sm:m-[0px] bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded-md font-semibold transition m-0">
+            Confirm
+          </button>
+          :
+          <button 
+          onClick={()=>{setEditSectionBar(false); }}
+          className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md font-semibold transition">
+            Edit
+          </button>
+          }
+
             <button
-              onClick={() => deleteSectionHandler(section)}
-              className="mt-3 sm:mt-0 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm transition"
-            >
-              Delete Section
-            </button>
-          </div>
+            onClick={() => deleteSectionHandler(section)}
+            className="mt-3 sm:mt-0 inline-flex items-center justify-center gap-1
+                      bg-red-500 hover:bg-red-600 text-white
+                      px-3 py-1.5 rounded-md text-sm font-medium transition
+                      focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1"
+          >
+            <TrashIcon className="h-4 w-4" />
+            <span>Delete</span>
+          </button>
+          </div>  
 
           {/* Question List */}
           {questionArr?.[section]?.length > 0 && (
@@ -111,6 +199,7 @@ export default function RecursiveSection({ sheetName }) {
                       >
                         {question.difficulty}
                       </span>
+                      <span onClick={()=>deleteQuestionHandler(section,idx)}>Delete Question</span>
                     </div>
                   </li>
                 ))}
@@ -129,6 +218,7 @@ export default function RecursiveSection({ sheetName }) {
               className="flex flex-col gap-3 mt-2"
             >
               <input
+                required
                 value={questionForm[section]?.name || ""}
                 name="name"
                 type="text"
@@ -137,6 +227,7 @@ export default function RecursiveSection({ sheetName }) {
                 className="border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none"
               />
               <input
+                required
                 value={questionForm[section]?.link || ""}
                 name="link"
                 type="text"
@@ -145,6 +236,7 @@ export default function RecursiveSection({ sheetName }) {
                 className="border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none"
               />
               <input
+                required
                 value={questionForm[section]?.notes || ""}
                 name="notes"
                 type="text"
@@ -153,6 +245,7 @@ export default function RecursiveSection({ sheetName }) {
                 className="border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none"
               />
               <select
+                required
                 value={questionForm[section]?.difficulty || ""}
                 name="difficulty"
                 onChange={(e) => questionFormHandler(e, section)}
@@ -174,6 +267,8 @@ export default function RecursiveSection({ sheetName }) {
           </fieldset>
         </div>
       ))}
+
+      {sheetErrorMessage ? <div className="text-red-500 text-sm">*{sheetErrorMessage}</div> : <></>}
 
       {/* Global Controls */}
       <div className="flex flex-col sm:flex-row justify-between gap-3">
