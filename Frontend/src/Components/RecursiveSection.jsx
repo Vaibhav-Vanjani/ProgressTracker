@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { TrashIcon } from '@heroicons/react/24/solid';
+import { useTrackerContext } from "../Context/ProgressTrackerContext";
 
 
 export default function RecursiveSection({ sheetName ,errorMessage}) {
@@ -7,9 +8,11 @@ export default function RecursiveSection({ sheetName ,errorMessage}) {
   const [questionArr, setQuestionArr] = useState({});
   const [questionForm, setQuestionForm] = useState({});
   const [sectionName, setSectionName] = useState({});
-  const [editSectionBar,setEditSectionBar] = useState(false);
+  const [editSectionBar,setEditSectionBar] = useState({});
   const [sheetErrorMessage,setSheetErrorMessage] = useState(errorMessage);
 
+   const {setSheetName,setShowSectionBar,userData} = useTrackerContext();
+  console.log(userData?.[0],"recursiveSection");
   function addSheetToDB(sheet) {
     try {
        async function getSheets(){
@@ -21,7 +24,7 @@ export default function RecursiveSection({ sheetName ,errorMessage}) {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
                 },
-                body: JSON.stringify(sheet),
+                body: JSON.stringify({sheet:sheet,userId:userData?.[0]?._id}),
        });
           if(!response.ok){
             setSheetErrorMessage("**Please fill all details !!");
@@ -38,6 +41,8 @@ export default function RecursiveSection({ sheetName ,errorMessage}) {
           setQuestionArr({});
           setQuestionForm({});
           setSectionName({});
+          setSheetName("");
+          setShowSectionBar(false);
       }
       getSheets();
   
@@ -96,7 +101,7 @@ export default function RecursiveSection({ sheetName ,errorMessage}) {
   function createSheetHandler() {
     const resultObject = {
       sheetName,
-      createdBy: "ViewOnly",
+      createdBy: "User",
       section: sectionArr.map((id) => ({
         subsectionName: sectionName[id],
         subsection: questionArr[id]?.map((question)=>{
@@ -123,7 +128,7 @@ export default function RecursiveSection({ sheetName ,errorMessage}) {
         >
           {/* Section Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
-            {!editSectionBar ? <input
+            {!editSectionBar?.[section] ? <input
               type="text"
               placeholder="Section Name"
               id={section}
@@ -141,15 +146,16 @@ export default function RecursiveSection({ sheetName ,errorMessage}) {
             </div>
             }
             
-            {!editSectionBar ? 
+            {
+            !editSectionBar?.[section] ? 
           <button 
-          onClick={()=>{setEditSectionBar(true); }}
+          onClick={()=>{console.log(editSectionBar,"check"); if(!sectionName?.[section]?.length){return;}  setEditSectionBar(prev=>({...prev,[section]:true})); }}
           className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded-md font-semibold transition mt-2 sm:m-[0px] bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded-md font-semibold transition m-0">
             Confirm
           </button>
           :
           <button 
-          onClick={()=>{setEditSectionBar(false); }}
+          onClick={()=>{console.log(editSectionBar,"check"); setEditSectionBar(prev=>({...prev,[section]:false})); }}
           className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md font-semibold transition">
             Edit
           </button>

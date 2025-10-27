@@ -1,14 +1,40 @@
 import { useState } from "react";
 import RecursiveSection from "./RecursiveSection";
+import { useTrackerContext } from "../Context/ProgressTrackerContext";
+import { useNavigate } from "react-router-dom";
 
 export default function CreateSheet() {
-    const [sheetName,setSheetName] = useState("");
-    const [showSectionBar,setShowSectionBar] = useState(false);
-    const [errorMessage,setErrorMessage] = useState(null);
-    
+   const {sheetName,setSheetName,
+        showSectionBar,setShowSectionBar,
+        errorMessage,setErrorMessage} = useTrackerContext();
+  const navigate = useNavigate();
   return (
-    <div className="min-h-screen flex flex-col items-center bg-gray-50 py-10 px-4">
-      <div className="bg-white shadow-md rounded-lg p-6 w-full sm:w-[600px]">
+    <>
+    
+    <div className="mt-4 min-h-screen flex flex-col items-center bg-gray-50 py-10 px-4">
+      <div className="w-full flex justify-start">
+        <button
+          onClick={()=>navigate(-1)}
+          className="mt-14 mb-5 flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg shadow-sm transition-all duration-200 hover:translate-x-[-2px]"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+            className="w-5 h-5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15.75 19.5L8.25 12l7.5-7.5"
+            />
+          </svg>
+          <span>Back</span>
+        </button>
+      </div>
+      <div className="mt-4 bg-white shadow-md rounded-lg p-6 w-full sm:w-[600px]">
         <h1 className="text-2xl font-bold text-gray-800 mb-4 text-center">
           Create a New Sheet
         </h1>
@@ -56,5 +82,5 @@ export default function CreateSheet() {
        {<RecursiveSection sheetName={sheetName} errorMessage={errorMessage} />}
       </div>
     </div>
-  );
+  </>);
 }

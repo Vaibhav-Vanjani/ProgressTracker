@@ -10,7 +10,7 @@ const User = require('../models/User.js');
 const userSignUpSchema = z.object({
     firstName:z.string().trim(),
     lastName:z.string().trim(),
-    phoneNumber:z.number().min(10),
+    phoneNumber:z.string().min(10),
     email:z.email().trim(),
     password:z.string(),
 })
@@ -22,7 +22,81 @@ const userLoginSchema = z.object({
 
 router.use(express.json());
 
-router.get('/signup',async function(req,res){
+
+async function handleSheet(req,res,next){
+   
+    console.log(req?.cookies?.token,req?.cookies,"::/sheet::");
+    if(req?.cookies?.token){
+        const token = req?.cookies?.token;
+        try {
+            const userFromToken = jwt.verify(req?.cookies?.token,JWT_SECRET);
+            console.log(userFromToken,"userFromToken");
+            if(userFromToken?.userId?.[0]?._id){
+                console.log(userFromToken?.userId?.[0]?._id,"handlesheet");
+                
+                const user = await User.findById(userFromToken?.userId?.[0]?._id);
+                console.log(user,"jandle seet user");
+
+                if (!user) {
+                    throw new Error("User not found");
+                }
+
+                const arrayOfAvailableSheets = await Promise.all(
+                user.availableSheets.map(async (sheetId) => {
+                    const sheet = await Sheet.findById(sheetId)
+                    .populate({
+                        path: "section",
+                        populate: {
+                        path: "subsection"
+                        }
+                    })
+                    .lean(); 
+                    return sheet;
+                })
+            );
+            
+                    console.log("arrayOfAvailableSheets",arrayOfAvailableSheets);
+                userFromToken.availableSheets = arrayOfAvailableSheets;
+
+                return res.status(200).cookie('token', token , {
+                    httpOnly: true,
+                    secure: false,
+                    maxAge: 3600000,
+                    sameSite: 'Lax',
+                }).json({
+                    success:true,
+                    userId:userFromToken?.userId,
+                    data:userFromToken,
+                })
+            }
+        }
+        catch (error) {
+            console.log(error,"path ='/' ->",req?.cookies?.token);
+        }  
+    }
+
+    const viewOnlySheet = await Sheet.find({createdBy:"ViewOnly"}).populate({
+        path:"section",
+        populate:{
+             path:"subsection",
+        }
+    });
+
+    if(!viewOnlySheet?.length){
+        return res.status(500).json({
+            success:false,
+            data: "No Sheets available !!",
+        })
+    }
+
+   return res.status(200).json({
+        success:true,
+        data: {"availableSheets":viewOnlySheet},
+    })
+}
+
+
+router.post('/signup',async function(req,res,next){
     try {
         const isZodVerified = userSignUpSchema.safeParse(req.body);
     
@@ -49,20 +123,30 @@ router.get('/signup',async function(req,res){
         const hashedPassword = await bcrypt.hash(isZodVerified.data.password,10);
         isZodVerified.data.password = hashedPassword;
 
-        await User.create(isZodVerified.data);
+        const viewOnlySheet = await Sheet.find({createdBy:"ViewOnly"});
+        console.log("viewOnlySheet",viewOnlySheet);
+        if(viewOnlySheet?.length>0){
+             isZodVerified.data.availableSheets = viewOnlySheet.map((sheet)=>sheet._id);
+        }
 
+        const userObj = await User.create(isZodVerified.data);
+        isZodVerified.data.userId = [userObj];
         const token = jwt.sign(isZodVerified.data,JWT_SECRET);
 
-        res.status(200).cookie('token', token , {
-            httpOnly: true,
-            secure: true,
-            maxAge: 3600000, // 1 hour
-            sameSite: 'Strict',
-        }).json({
-            success:true,
-            data:token,
-            body:isZodVerified.data,
-        });
+        // res.status(200).cookie('token', token , {
+        //     httpOnly: true,
+        //     secure: false,
+        //     maxAge: 3600000,
+        //     sameSite: 'Lax',
+        // }).json({
+        //     success:true,
+        //     data:token,
+        //     body:isZodVerified.data,
+        // });
+        req.cookies = {...req.cookies,
+            ["token"]:token,
+        }
+        next();
     } catch (error) {
         console.log(error,"Error in Signing Up");
          res.status(500).json({
@@ -71,9 +155,9 @@ router.get('/signup',async function(req,res){
         });
     }
     
-})
+},handleSheet)
 
-router.get('/login',async function(req,res){
+router.post('/login',async function(req,res,next){
     try {
     const isZodVerified = userLoginSchema.safeParse(req.body);
         
@@ -98,6 +182,12 @@ router.get('/login',async function(req,res){
             })
         }
 
+        isZodVerified.data["userId"] = isUserPresent;
+        console.log(isUserPresent?.[0],"isUserPresent?.[0]");
+        if(isUserPresent?.[0]?.availableSheets?.length){
+             isZodVerified.data.availableSheets = isUserPresent?.[0]?.availableSheets;
+            console.log(isUserPresent?.[0]?.availableSheets ,"isZodVerified.data.availableSheets ");
+        }
         const isCorrectPassword = await bcrypt.compare(isZodVerified.data.password,isUserPresent[0]?.password);
 
         if(!isCorrectPassword){
@@ -111,16 +201,10 @@ router.get('/login',async function(req,res){
 
         const token = jwt.sign(isZodVerified.data,JWT_SECRET);
 
-        res.status(200).cookie('token', token , {
-            httpOnly: true,
-            secure: true,
-            maxAge: 3600000, // 1 hour
-            sameSite: 'Strict',
-        }).json({
-            success:true,
-            data:token,
-            body:isZodVerified.data,
-        });
+        req.cookies = {...req.cookies,
+            ["token"]:token,
+        }
+        next();
     } catch (error) {
         console.log(error,"Error in Signing Up");
          res.status(500).json({
@@ -129,32 +213,12 @@ router.get('/login',async function(req,res){
         });
     }
      
-})
+},handleSheet)
 
 router.get('/logout',function(req,res){
     
 })
 
-router.get('/sheet',async function(req,res){
-
-    const viewOnlySheet = await Sheet.find({createdBy:"ViewOnly"}).populate({
-        path:"section",
-        populate:{
-             path:"subsection",
-        }
-    });
-
-    if(!viewOnlySheet?.length){
-        return res.status(500).json({
-            success:false,
-            data: "No Sheets available !!",
-        })
-    }
-
-   return res.status(200).json({
-        success:true,
-        data: viewOnlySheet,
-    })
-})
+router.get('/sheet',handleSheet);
 
 module.exports = router;

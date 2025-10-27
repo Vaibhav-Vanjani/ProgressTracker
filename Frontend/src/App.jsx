@@ -1,25 +1,37 @@
 import { useState } from 'react'
 import './App.css'
 import { useEffect } from 'react';
+import Navbar from './Components/NavBar.jsx';
+import Form from './Components/Form.jsx';
+import { useTrackerContext } from './Context/ProgressTrackerContext.jsx';
+import Home from './Pages/Home.jsx';
+import { Outlet, Route ,Routes, useNavigate} from 'react-router-dom';
 import SheetCollection from './Components/SheetCollection.jsx';
-import CreateSheet from './Components/CreateSheet.jsx';
 import SheetView from './Components/SheetView.jsx';
+import CreateSheet from './Components/CreateSheet.jsx';
 
 function App() {
-  const [sheetArray,setSheetArray] = useState([]);
-  const [sheetViewId,setSheetViewId] = useState(0);
+ 
+  const {sheetArray,setSheetArray, 
+        sheetViewId,setSheetViewId,
+        userData,setUserData,sheetViewHandler} = useTrackerContext();
+  const navigate = useNavigate();
 
   useEffect(()=>{
    try {
      async function getSheets(){
-        const response = await fetch('http://localhost:3000/sheet');
+        const response = await fetch('http://localhost:3000/sheet',{
+          method:"GET",
+          credentials: 'include',
+        });
         if(!response.ok){
           return ;
         }
         const data = await response.json();
         console.log(data.data);
-        setSheetArray(data?.data);
-        setSheetViewId(data?.data[0]?._id);
+        setSheetArray(data?.data?.availableSheets);
+        setSheetViewId(data?.data?.availableSheets?.[0]?._id);
+        setUserData(data?.userId);
         console.log(data);
     }
     getSheets();
@@ -30,24 +42,25 @@ function App() {
    }
   },[])
 
-
-  function sheetViewHandler(id){
-    // console.log(id,"sheetViewHandler");
-    setSheetViewId(id);
-  }
-
-
   if(!sheetArray?.length){
-    return <>Loading ... </>;
+    navigate('/Home');
   }
 
   return (
     <>
       {/* {JSON.stringify(sheetArray)} */}
       {/* <LoginBlocker/> */}
-      <SheetCollection sheet={sheetArray} sheetViewHandler={sheetViewHandler}/>
-      <SheetView sheet={sheetArray} sheetViewId ={sheetViewId}/>
-      <CreateSheet/>
+      
+
+      <Navbar></Navbar>
+      <Form></Form>
+      <Routes>
+        <Route path='/' element={<Outlet/>}>
+          <Route index element={<Home></Home>}></Route>
+          <Route path='/:sheetId' element={<SheetView/>}></Route>
+          <Route path='*' element={<CreateSheet/>}></Route>
+        </Route>
+      </Routes>
     </>
   )
 }

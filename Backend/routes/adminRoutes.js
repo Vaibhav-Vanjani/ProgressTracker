@@ -99,11 +99,12 @@ async function addQuestionToSubSection(userId,sheetId,sectionId,questionObj) {
      }
 }
 
- async function addSheetToDB(sheet){
+ async function addSheetToDB(sheet,userId){
 
-    console.log(sheet,"sheet");
+    console.log(sheet,"sheet",userId,"userId",typeof userId);
       try {
             const sheetDBobj = await Sheet.find({sheetName:sheet.sheetName});
+            
         if(!(sheetDBobj?.length)){
             const sectionIdArray = await Promise.all(sheet.section.map(async (section) => {
                 const questionIdArray = await Promise.all(section.subsection.map(async (question) => {
@@ -124,6 +125,17 @@ async function addQuestionToSubSection(userId,sheetId,sectionId,questionObj) {
                     createdBy:sheet.createdBy,
                 });
 
+
+            if(userId?.length){
+                const userSheetUpdated = await User.findByIdAndUpdate(
+                        userId,
+                        { $push: { availableSheets: sheetId._id } },
+                        { new: true }
+                        );
+
+                console.log(userSheetUpdated,"userSheetUpdated");
+            }                
+
              return "SUCCESS";
         }    
        return "Sheet Already Present With This Name";
@@ -137,7 +149,9 @@ router.use(express.json());
 router.post('/addSheet',async (req,res,next)=>{
     try{
             console.log("inside admin addsheet",req.body);
-            const sheetSchemaValidate = sheetSchema.safeParse(req.body);
+            const sheet =req.body.sheet;
+            const userId = req.body.userId;
+            const sheetSchemaValidate = sheetSchema.safeParse(sheet);
 
             if(!sheetSchemaValidate.success){
                  console.log(sheetSchemaValidate.error);
@@ -147,7 +161,7 @@ router.post('/addSheet',async (req,res,next)=>{
                 });
             }
 
-            const entry = await addSheetToDB(req.body);
+            const entry = await addSheetToDB(sheet,userId);
 
             if(entry === 'SUCCESS'){
                  return res.status(200).json({
