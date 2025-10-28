@@ -215,9 +215,12 @@ router.post('/login',async function(req,res,next){
      
 },handleSheet)
 
-router.get('/logout',function(req,res){
-    
-})
+router.post('/logout',function(req,res,next){
+    if(req.cookies)
+   { req.cookies.token = null;}
+    res.clearCookie("token"); 
+    next();
+},handleSheet)
 
 router.get('/sheet',handleSheet);
 

@@ -18,6 +18,9 @@ export default function TrackerContextProvider(props){
     const [sheetName,setSheetName] = useState("");
     const [showSectionBar,setShowSectionBar] = useState(false);
     const [errorMessage,setErrorMessage] = useState(null);
+    const [searchSet,setSearchSet] = useState([]);
+    const [contestSet,setContestSet] = useState([]);
+    const [searchedFor,setSearchedFor] = useState(null);
 
     function sheetViewHandler(id){
     // console.log(id,"sheetViewHandler");
@@ -104,6 +107,81 @@ export default function TrackerContextProvider(props){
        await loginUser(userDataObject);
     }
 
+    // -----
+     async function logOutSubmit(event){
+        event.preventDefault();
+        console.log("logOutSubmit"); 
+
+        async function logOut() {
+               try{
+                    setLoading(true);
+                     const response = await fetch('http://localhost:3000/logout',
+                       {
+                        method:"POST",
+                        credentials: 'include',
+                        headers: 
+                        {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        }
+                      }
+                    );
+                    if(!response.ok){
+                        console.log(response,"logoutUser-ERROR");
+                        setLoading(false);
+                        return ;
+                    }
+                    const data = await response.json();
+                    console.log(data,"logoutUser-SUCCESS");
+                    setLoading(false);
+                    alert("User logout Success !!");
+                    setShowLoginForm(false);
+                    setSheetArray(data?.data?.availableSheets);
+                    setSheetViewId(data?.data?.availableSheets?.[0]?._id);
+                    setUserData(null);
+               } 
+               catch(error){
+                 console.log(error,"logoutUser-ERROR=catch");
+               }
+        }
+       await logOut();
+    }
+    // -----
+
+
+    function insertInContest(question){
+       if(!question){
+        console.log(question,"falsy question");
+        return ;
+       }
+
+       if(!contestSet.find((contestquestion)=>contestquestion._id === question._id)){
+         setContestSet(prev=>[...prev,question]);
+       }
+       else{
+         console.log("already present in contest set!");
+       }
+    }
+    
+    function searchInAllSheet(event,val){
+        setSearchedFor(val);
+        console.log(val,"searchinallshee");
+        const searchQuestionList = [];
+       const questionSet = sheetArray?.forEach((sheet)=>{
+            sheet?.section?.forEach((section)=>{
+                section?.subsection?.forEach((subsection)=>{
+                    // console.log(subsection?.questionName,"not hi");
+                       if(val && subsection?.questionName?.includes(val)){
+                            console.log(subsection?.questionName,"hi");
+                            searchQuestionList.push(subsection);    
+                       }
+                })
+            })
+        })
+        // console.log(questionSet,"questionSet");
+        setSearchSet(searchQuestionList);
+    }
+
     const values = {
         loading,setLoading,
         showSignupForm,setShowSignupForm,
@@ -116,6 +194,11 @@ export default function TrackerContextProvider(props){
         sheetName,setSheetName,
         showSectionBar,setShowSectionBar,
         errorMessage,setErrorMessage,
+        logOutSubmit,
+        searchSet,setSearchSet,
+        contestSet,setContestSet,
+        searchedFor,setSearchedFor,
+        insertInContest,searchInAllSheet
     }
 
     return (<TrackerContext.Provider value={values}>

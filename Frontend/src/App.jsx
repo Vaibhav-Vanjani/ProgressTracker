@@ -6,9 +6,11 @@ import Form from './Components/Form.jsx';
 import { useTrackerContext } from './Context/ProgressTrackerContext.jsx';
 import Home from './Pages/Home.jsx';
 import { Outlet, Route ,Routes, useNavigate} from 'react-router-dom';
-import SheetCollection from './Components/SheetCollection.jsx';
 import SheetView from './Components/SheetView.jsx';
 import CreateSheet from './Components/CreateSheet.jsx';
+import HomeButtons from './Pages/ButtonList.jsx';
+import Contest from './Pages/Contest.jsx';
+import ContestView from './Components/ContestView.jsx';
 
 function App() {
  
@@ -42,10 +44,6 @@ function App() {
    }
   },[])
 
-  if(!sheetArray?.length){
-    navigate('/Home');
-  }
-
   return (
     <>
       {/* {JSON.stringify(sheetArray)} */}
@@ -56,8 +54,11 @@ function App() {
       <Form></Form>
       <Routes>
         <Route path='/' element={<Outlet/>}>
-          <Route index element={<Home></Home>}></Route>
+          <Route index element={<HomeButtons></HomeButtons>}></Route>
+          <Route path='/availableSheet' element={<Home/>}></Route>
           <Route path='/:sheetId' element={<SheetView/>}></Route>
+          <Route path='/contest' element={<Contest/>}></Route>
+          <Route path='/contest-view' element={<ContestView/>}></Route>
           <Route path='*' element={<CreateSheet/>}></Route>
         </Route>
       </Routes>

@@ -1,7 +1,7 @@
 import { useTrackerContext } from "../Context/ProgressTrackerContext.jsx";
 
 export default function Navbar() {
-  const { setShowLoginForm, setShowSignupForm , userData } = useTrackerContext();
+  const { setShowLoginForm, setShowSignupForm , userData , logOutSubmit} = useTrackerContext();
   console.log(userData,"Navbar");
 
   return (
@@ -18,7 +18,7 @@ export default function Navbar() {
         </div>
 
         {/* Nav Actions */}
-        <div className="flex gap-3">
+        {!userData ? ( <div className="flex gap-3">
           <button
             onClick={() => {
               setShowLoginForm(false);
@@ -38,7 +38,28 @@ export default function Navbar() {
           >
             Log In
           </button>
-        </div>
+        </div>) 
+        : 
+        ( <div className="flex gap-3">
+          <span className="px-4 py-2 rounded-lg 
+                          bg-green-500 text-white 
+                          font-semibold hover:bg-green-600 
+                          transition duration-200 shadow"
+           >Profile</span>
+          <button
+            onClick={(e) => {
+              // setShowSignupForm(false);
+              // setShowLoginForm(true);
+              logOutSubmit(e);
+            }}
+            className="px-4 py-2 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition duration-200 shadow"
+          >
+            Log Out
+          </button>
+        </div>)
+        }
+
+       
       </nav>
     </header>
   );
