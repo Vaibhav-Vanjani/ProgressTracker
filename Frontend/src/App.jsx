@@ -56,7 +56,7 @@ function App() {
         <Route path='/' element={<Outlet/>}>
           <Route index element={<HomeButtons></HomeButtons>}></Route>
           <Route path='/availableSheet' element={<Home/>}></Route>
-          <Route path='/:sheetId' element={<SheetView/>}></Route>
+          <Route path='/availableSheet/:sheetId' element={<SheetView/>}></Route>
           <Route path='/contest' element={<Contest/>}></Route>
           <Route path='/contest-view' element={<ContestView/>}></Route>
           <Route path='*' element={<CreateSheet/>}></Route>
