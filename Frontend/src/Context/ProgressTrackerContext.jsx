@@ -1,6 +1,7 @@
 import { Children } from "react";
-import { useState,useContext } from "react";
+import { useState,useContext,useRef } from "react";
 import { createContext } from "react";
+import { useNavigate} from 'react-router-dom';
 
 export const TrackerContext = createContext();
 
@@ -21,6 +22,14 @@ export default function TrackerContextProvider(props){
     const [searchSet,setSearchSet] = useState([]);
     const [contestSet,setContestSet] = useState([]);
     const [searchedFor,setSearchedFor] = useState(null);
+    const navigate = useNavigate();
+    const ref = useRef(0);
+    const inputRef = useRef(new Array(3).fill(-1));
+    const [timer,setTimer] = useState();
+    const [second,setSecond] = useState(false);
+    const [timerForm,setTimerForm] = useState({"hour":"00","minutes":"00","second":"00"});  
+    const [questionComplete,setQuestionComplete] = useState([]);
+      
 
     function sheetViewHandler(id){
     // console.log(id,"sheetViewHandler");
@@ -182,6 +191,85 @@ export default function TrackerContextProvider(props){
         setSearchSet(searchQuestionList);
     }
 
+      function handleTimerForm(e){
+        if(((Number)(e.target.value) !== 0) && !(Number)(e.target.value) && (String)(e.target.value).length){
+            return ;
+        }
+        let {name,value} = e.target;
+        if((Number)(value)>60){
+            value = Math.floor((Number)(value)/10);
+            if((String)(value).length==1){
+                value = "0" + value;
+            }
+        }
+        else if((Number)(value)<10){
+            value = "0" + (Number)(value);
+        }
+        else{
+            if((String)((Number)(value)).length>2){
+                return;
+            }
+            value = (String)((Number)(value));
+        }
+        setTimerForm(prev=>({...prev,[name]:(String)(value)}));
+        return; 
+      }
+
+      function disableTimerFields(isdisable)
+      {
+        inputRef.current.forEach(element => {
+          console.log(element,"inside inputref");
+          if(element)
+          {
+            element.disabled = isdisable;
+          }
+          return;
+        });
+        return true;
+      }
+
+      function handleTimer(){
+        const currentContestTimeInSeconds = 60*60*(Number)(timerForm["hour"]) + 60*(Number)(timerForm["minutes"]) + (Number)(timerForm["second"]);
+       const timeIntervalId = setInterval(() => {
+            if(currentContestTimeInSeconds){
+                setTimerForm(prev=>{
+                    let second = 60*60*(Number)(prev["hour"]) + 60*(Number)(prev["minutes"]) + (Number)(prev["second"]) - 1;
+                    if(!second){
+                        clearInterval(timeIntervalId);
+                    }
+                    let hours = Math.floor(second/(60*60));
+                    let minutes = Math.floor((second % 3600) / 60);  // 3675 --> minutes edge case 
+                    let seconds = Math.floor(second%60);
+
+                    console.log(prev["hour"] ,(prev["minutes"]) ,(prev["second"]), second);
+                    if((String)((Number)(hours)).length===1){
+                        hours = "0" + hours;
+                    }
+                    if((String)((Number)(minutes)).length===1){
+                        minutes = "0" + minutes;
+                    }
+                    if((String)((Number)(seconds)).length===1){
+                        seconds = "0" + seconds;
+                    }
+                    return {...prev,["hour"]:hours,["minutes"]:minutes,["second"]:seconds}
+                })
+            }
+        }, 1000);
+        ref.current = timeIntervalId;
+        currentContestTimeInSeconds && disableTimerFields(true) && setSecond(prev=>!prev);
+      }
+      
+
+      function questionCompleteHandler(questionId){
+        if(questionComplete.length === (contestSet.length-1)){
+            clearInterval(ref.current); 
+            disableTimerFields(false); 
+            alert("Contest Completed YAYYY!!")
+        }
+
+        setQuestionComplete(prev=>[...prev,questionId]);
+      }
+
     const values = {
         loading,setLoading,
         showSignupForm,setShowSignupForm,
@@ -198,7 +286,15 @@ export default function TrackerContextProvider(props){
         searchSet,setSearchSet,
         contestSet,setContestSet,
         searchedFor,setSearchedFor,
-        insertInContest,searchInAllSheet
+        insertInContest,searchInAllSheet,
+        navigate,ref,
+        inputRef,
+        timer,setTimer,
+        second,setSecond,
+        timerForm,setTimerForm,
+        questionComplete,setQuestionComplete,
+        handleTimerForm,disableTimerFields,
+        handleTimer,questionCompleteHandler
     }
 
     return (<TrackerContext.Provider value={values}>

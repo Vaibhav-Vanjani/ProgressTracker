@@ -224,4 +224,35 @@ router.post('/logout',function(req,res,next){
 
 router.get('/sheet',handleSheet);
 
+router.post('/v1/markComplete', async function(req,res,next){
+    const userID = req.body.userID;
+    const sheetID = req.body.sheetID;
+    const subsectionID = req.body.subsectionID;
+    const sectionID = req.body.sectionID;
+
+    if(!userID || !sheetID || !subsectionID || !sectionID){
+        return res.status(400).json({
+            success:false,
+            data:"Invalid Data",
+            errorcode: 101,
+        })
+    }
+
+    const isUserPresent = await User.findById({_id:sheetID});
+    if(!isUserPresent){
+        return res.status(400).json({
+            success:false,
+            data:"User Not Present",
+            errorcode: 101,
+        })
+    }
+
+    const isViewOnlySheet = await Sheet.findById({_id:sheetID,createdBy:"ViewOnly"});
+     if(isViewOnlySheet){
+    //    isUserPresent.
+    }
+    
+    
+});
+
 module.exports = router;

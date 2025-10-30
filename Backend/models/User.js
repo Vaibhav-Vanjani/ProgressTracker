@@ -29,7 +29,12 @@ const userSchema = new mongoose.Schema({
     },
     availableSheets:[{
         type:String,
-    }]
+    }],
+    viewOnlySheetProgress:[
+        // {
+        //     type:
+        // }
+    ]
 })
 
 module.exports =  mongoose.model('User',userSchema);

@@ -71,7 +71,7 @@ export default function SheetView() {
 
             {/* Questions List */}
             {item?.subsection?.length ? 
-            !arr.includes(item._id) && <QuestionCollection questionList={item.subsection}/> :  
+            !arr.includes(item._id) && <QuestionCollection subsectionId={item._id} sheetId={params.sheetId} questionList={item.subsection}/> :  
             (
               <p className="text-gray-500 text-sm italic">No questions available.</p>
             )}

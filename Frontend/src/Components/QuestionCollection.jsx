@@ -1,4 +1,4 @@
-export default function QuestionCollection({questionList}){
+export default function QuestionCollection({ subsectionId, sheetId,questionList}){
 
   const map = new Map([["Easy",1],["Medium",2],["Hard",3]]);
   questionList?.sort((a,b)=>{
@@ -6,6 +6,52 @@ export default function QuestionCollection({questionList}){
     const bVal = map.get(b?.difficulty) ?? 999;
     return aVal - bVal;
   })
+
+  function markCompletedHandler(questionID,subsectionID,sectionID){
+        const markComplete =async()=>{
+             const response = await fetch('http://localhost:3000/v1/markComplete',
+                {
+                    method:"POST",
+                    headers: 
+                    {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({questionID:questionID,subsectionID:subsectionID,sectionID:sectionID}),
+                }
+              );
+          if(!response.ok){
+            console.log(response);
+            alert("Something went wrong in marking complete"); 
+          }
+           console.log(response);
+          alert("SUCCESS- YAYYY"); 
+        }
+        markComplete();
+  }
+
+    function markForRevisionHandler(questionID,subsectionID,sectionID){
+        const markForRevision =async()=>{
+             const response = await fetch('http://localhost:3000/v1/markForRevision',
+                {
+                    method:"POST",
+                    headers: 
+                    {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({questionID:questionID,subsectionID:subsectionID,sectionID:sectionID}),
+                }
+              );
+          if(!response.ok){
+            console.log(response);
+            alert("Something went wrong in marking complete"); 
+          }
+           console.log(response);
+           alert("SUCCESS- YAYYY"); 
+        }
+        markForRevision();
+  }
 
     return (
               <ul className="space-y-3">
@@ -37,6 +83,7 @@ export default function QuestionCollection({questionList}){
                       </span>
 
                       <span
+                        onClick={()=>markForRevisionHandler(question._id,subsectionId,sheetId)}
                         className={`px-2 py-1 rounded-md font-medium ${
                           question.markForRevision
                             ? "bg-purple-100 text-purple-700"
@@ -47,6 +94,7 @@ export default function QuestionCollection({questionList}){
                       </span>
 
                       <span
+                        onClick={()=>markCompletedHandler(question._id,subsectionId,sheetId)}
                         className={`px-2 py-1 rounded-md font-medium ${
                           question.markCompleted
                             ? "bg-green-100 text-green-700"
